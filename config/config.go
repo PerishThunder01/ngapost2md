@@ -8,11 +8,11 @@ import (
 )
 
 // 定义默认配置。使用 slice 保证顺序
-var sectionList = []string{"config", "network", "post"}
+var sectionList = []string{"config", "network", "post", "server"}
 
 var defaultConfig = map[string][][3]string{
 	"config": {
-		{"version", "1.10.0", "请勿修改此项。配置文件中的注释项不应用于记录信息，软件加载时会自动覆盖并删除。"},
+		{"version", "2.0.0", "请勿修改此项。配置文件中的注释项不应用于记录信息，软件加载时会自动覆盖并删除。"},
 	},
 	"network": {
 		{"base_url", "https://bbs.nga.cn", "软件访问的 NGA 域名。默认值为 https://bbs.nga.cn。"},
@@ -33,6 +33,10 @@ var defaultConfig = map[string][][3]string{
 		{"use_network_media_url", "False", "[#109]是否直接使用媒体文件的在线链接，而不是将媒体资源下载到本地后做本地引用。默认值为 False（不启用）。"},
 		{"assets_path", "./assets/", "[#124]帖子媒体资源存储路径。留空或设为 '.' 时，资源将保存在与输出文件相同的目录下。默认值为 ./assets/。"},
 		{"split_md_file", "-1", "[#105]是否切分生成的 md 文件，并指定切分后每个文件大约包含的页数。1 页约等于 20 层。允许范围为 -1（含）至 200（含）。当值为 0 或 -1 时，不进行切分。默认值为 -1（不切分）。"},
+	},
+	"server": {
+		{"password", "<;MODIFY_ME;>", "Server 模式的 Basic Auth 密码。若未设置密码，Server 模式将拒绝启动。"},
+		{"port", "8080", "Server 模式默认监听端口。可被 --port 参数覆盖。"},
 	},
 }
 
@@ -57,7 +61,7 @@ func GetConfigAutoUpdate() (*ini.File, error) {
 	latestCfgVersion := defaultcfg.Section("config").Key("version").String()
 
 	// 针对相同功能，新配置相比于旧配置名字不同，需要进行自动迁移
-	if cfg.Section(("post")).HasKey("enable_post_title") && !cfg.Section(("post")).HasKey("use_title_as_md_file_name") {
+	if cfg.Section("post").HasKey("enable_post_title") && !cfg.Section("post").HasKey("use_title_as_md_file_name") {
 		// 从1.2.0->1.4.0时，enable_post_title 更名为 use_title_as_md_file_name
 		var oldValue string
 		if cfg.Section("post").Key("enable_post_title").MustBool() {
@@ -67,7 +71,7 @@ func GetConfigAutoUpdate() (*ini.File, error) {
 		}
 		defaultcfg.Section("post").Key("use_title_as_md_file_name").SetValue(oldValue)
 	}
-	if cfg.Section(("post")).HasKey("use_network_pic_url") && !cfg.Section(("post")).HasKey("use_network_media_url") {
+	if cfg.Section("post").HasKey("use_network_pic_url") && !cfg.Section("post").HasKey("use_network_media_url") {
 		// 从1.8.0/1.9.0->1.10.0，use_network_pic_url 更名为 use_network_media_url
 		var oldValue string
 		if cfg.Section("post").Key("use_network_pic_url").MustBool() {

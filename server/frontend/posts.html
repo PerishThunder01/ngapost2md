@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ngapost2md - 帖子列表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>:root { --pico-container-max-width: 60rem; --pico-font-size: 100%; }</style>
+</head>
+<body>
+    <nav class="container">
+        <ul><li style="display:flex;align-items:center;gap:0.4rem"><strong>ngapost2md</strong><a href="https://github.com/ludoux/ngapost2md" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></li></ul>
+        <ul>
+            <li><a href="/index.html">下载帖子</a></li>
+            <li><a href="/posts.html" class="contrast">帖子列表</a></li>
+            <li><a href="/schedules.html">定时任务</a></li>
+            <li><a href="/config.html">配置</a></li>
+        </ul>
+    </nav>
+    <main class="container">
+        <article>
+            <header><strong>已下载帖子</strong></header>
+            <button class="secondary" onclick="loadPosts()">刷新列表</button>
+            <table id="posts-table">
+                <thead>
+                    <tr><th>tid</th><th>标题</th><th>最大页数</th><th>最大楼层</th><th>文件夹</th><th>操作</th></tr>
+                </thead>
+                <tbody id="posts-body"></tbody>
+            </table>
+        </article>
+    </main>
+    <script>
+    async function loadPosts() {
+        const res = await fetch('/api/posts');
+        const posts = await res.json();
+        const tbody = document.getElementById('posts-body');
+        tbody.innerHTML = '';
+        posts.forEach(p => {
+            tbody.innerHTML += `<tr>
+                <td>${p.tid}</td>
+                <td>${p.title}</td>
+                <td>${p.maxPage}</td>
+                <td>${p.maxFloor}</td>
+                <td>${p.folderName}</td>
+                <td><button class="primary" onclick="updatePost(${p.tid})">增量更新</button></td>
+            </tr>`;
+        });
+        if (posts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">暂无已下载帖子</td></tr>';
+        }
+    }
+
+    async function updatePost(tid) {
+        const res = await fetch('/api/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tid })
+        });
+        if (res.ok) {
+            alert('增量更新已加入队列，请到下载页面查看队列进度');
+            window.location.href = '/index.html';
+        } else {
+            const err = await res.json();
+            alert(err.error || '加入队列失败');
+        }
+    }
+
+    loadPosts();
+    </script>
+</body>
+</html>
